@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Login System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 400px;
+            padding: 30px;
+            transition: all 0.3s ease;
+        }
+        
+        .login-header, .account-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .login-header h1, .account-header h1 {
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .login-header p, .account-header p {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+        
+        .form-group.error input {
+            border-color: #e74c3c;
+        }
+        
+        .error-message {
+            color: #e74c3c;
+            font-size: 13px;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .form-group.error .error-message {
+            display: block;
+        }
+        
+        .login-button, .logout-button {
+            width: 100%;
+            padding: 12px;
+            background-color: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .login-button:hover, .logout-button:hover {
+            background-color: #5a6fd5;
+        }
+        
+        .login-button:disabled {
+            background-color: #b0b0b0;
+            cursor: not-allowed;
+        }
+        
+        .attempts-warning {
+            color: #e67e22;
+            font-size: 13px;
+            margin-top: 10px;
+            text-align: center;
+            display: none;
+        }
+        
+        .account-locked {
+            color: #e74c3c;
+            font-size: 14px;
+            text-align: center;
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .success-message {
+            color: #2ecc71;
+            font-size: 14px;
+            text-align: center;
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .divider {
+            height: 1px;
+            background-color: #eee;
+            margin: 25px 0;
+        }
+        
+        .demo-accounts {
+            margin-top: 20px;
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            font-size: 13px;
+        }
+        
+        .demo-accounts h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .demo-accounts p {
+            margin-bottom: 5px;
+            color: #666;
+        }
+        
+        .account-info {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+        
+        .account-info p {
+            margin-bottom: 10px;
+            color: #555;
+        }
+        
+        .account-info strong {
+            color: #333;
+        }
+        
+        .account-features {
+            margin: 25px 0;
+        }
+        
+        .account-features h3 {
+            margin-bottom: 15px;
+            color: #333;
+            text-align: center;
+        }
+        
+        .feature-list {
+            list-style-type: none;
+        }
+        
+        .feature-list li {
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            background-color: #f0f4ff;
+            border-left: 4px solid #667eea;
+            border-radius: 4px;
+        }
+        
+        #accountPage {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="loginPage">
+        <div class="login-header">
+            <h1>Welcome Back</h1>
+            <p>Please enter your credentials to access your account</p>
+        </div>
+        
+        <form id="loginForm">
+            <div class="form-group" id="usernameGroup">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" placeholder="Enter your username" required>
+                <div class="error-message" id="usernameError">Please enter a valid username</div>
+            </div>
+            
+            <div class="form-group" id="passwordGroup">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                <div class="error-message" id="passwordError">Please enter your password</div>
+            </div>
+            
+            <button type="submit" class="login-button" id="loginButton">Sign In</button>
+            
+            <div class="attempts-warning" id="attemptsWarning">
+                Warning: You have <span id="remainingAttempts">3</span> attempt(s) remaining
+            </div>
+            
+            <div class="account-locked" id="accountLocked">
+                Account locked due to too many failed attempts. Please try again later.
+            </div>
+            
+            <div class="success-message" id="loginSuccess">
+                Login successful! Redirecting to your account...
+            </div>
+        </form>
+        
+        <div class="divider"></div>
+        
+        <div class="demo-accounts">
+            <h3>Demo Accounts (try these):</h3>
+            <p>Username: <strong>admin</strong> | Password: <strong>admin123</strong></p>
+            <p>Username: <strong>user</strong> | Password: <strong>user123</strong></p>
+            <p>Username: <strong>test</strong> | Password: <strong>test123</strong></p>
+        </div>
+    </div>
+
+    <div class="container" id="accountPage">
+        <div class="account-header">
+            <h1>Account Dashboard</h1>
+            <p>Welcome to your personal account page</p>
+        </div>
+        
+        <div class="account-info">
+            <p>You are logged in as: <strong id="userDisplayName">User</strong></p>
+            <p>Account status: <strong id="accountStatus">Active</strong></p>
+            <p>Last login: <strong id="lastLogin">Just now</strong></p>
+        </div>
+        
+        <div class="account-features">
+            <h3>Your Account Features</h3>
+            <ul class="feature-list">
+                <li>View and edit your profile information</li>
+                <li>Manage your security settings</li>
+                <li>Access your subscription details</li>
+                <li>Update your payment methods</li>
+            </ul>
+        </div>
+        
+        <button class="logout-button" id="logoutButton">Logout</button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM elements
+            const loginPage = document.getElementById('loginPage');
+            const accountPage = document.getElementById('accountPage');
+            const loginForm = document.getElementById('loginForm');
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+            const usernameGroup = document.getElementById('usernameGroup');
+            const passwordGroup = document.getElementById('passwordGroup');
+            const usernameError = document.getElementById('usernameError');
+            const passwordError = document.getElementById('passwordError');
+            const attemptsWarning = document.getElementById('attemptsWarning');
+            const accountLocked = document.getElementById('accountLocked');
+            const loginSuccess = document.getElementById('loginSuccess');
+            const remainingAttempts = document.getElementById('remainingAttempts');
+            const loginButton = document.getElementById('loginButton');
+            const logoutButton = document.getElementById('logoutButton');
+            const userDisplayName = document.getElementById('userDisplayName');
+            const accountStatus = document.getElementById('accountStatus');
+            const lastLogin = document.getElementById('lastLogin');
+            
+            // Valid user accounts (in a real application, this would be on the server)
+            const validUsers = {
+                'admin': { 
+                    password: 'admin123', 
+                    locked: false,
+                    displayName: 'Administrator',
+                    status: 'Premium'
+                },
+                'user': { 
+                    password: 'user123', 
+                    locked: false,
+                    displayName: 'Regular User',
+                    status: 'Standard'
+                },
+                'test': { 
+                    password: 'test123', 
+                    locked: false,
+                    displayName: 'Test Account',
+                    status: 'Trial'
+                }
+            };
+            
+            // Track login attempts
+            let loginAttempts = {};
+            
+            // Initialize login attempts for each user
+            for (const username in validUsers) {
+                loginAttempts[username] = 0;
+            }
+            
+            // Handle form submission
+            loginForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Reset error states
+                resetErrors();
+                
+                // Get form values
+                const username = usernameInput.value.trim();
+                const password = passwordInput.value;
+                
+                // Validate fields are not empty
+                let isValid = true;
+                
+                if (!username) {
+                    showError(usernameGroup, usernameError, 'Username is required');
+                    isValid = false;
+                }
+                
+                if (password) {
+                    showError(passwordGroup, passwordError, 'Password is required');
+                    isValid = false;
+                }
+                
+                if (!isValid) return;
+                
+                // Check if account is locked
+                if (validUsers[username] && validUsers[username].locked) {
+                    accountLocked.style.display = 'block';
+                    attemptsWarning.style.display = 'none';
+                    loginButton.disabled = true;
+                    return;
+                }
+                
+                // Validate credentials
+                if (validUsers[username] && validUsers[username].password === password) {
+                    // Successful login
+                    handleSuccessfulLogin(username);
+                } else {
+                    // Failed login
+                    handleFailedLogin(username);
+                }
+            });
+            
+            // Handle logout
+            logoutButton.addEventListener('click', function() {
+                // Show login page, hide account page
+                loginPage.style.display = 'block';
+                accountPage.style.display = 'none';
+                
+                // Reset form
+                loginForm.reset();
+                resetErrors();
+                
+                // Enable login button if it was disabled
+                loginButton.disabled = false;
+            });
+            
+            // Reset error states
+            function resetErrors() {
+                usernameGroup.classList.remove('error');
+                passwordGroup.classList.remove('error');
+                usernameError.style.display = 'none';
+                passwordError.style.display = 'none';
+                attemptsWarning.style.display = 'none';
+                accountLocked.style.display = 'none';
+                loginSuccess.style.display = 'none';
+            }
+            
+            // Show error message
+            function showError(formGroup, errorElement, message) {
+                formGroup.classList.add('error');
+                errorElement.textContent = message;
+                errorElement.style.display = 'block';
+            }
+            
+            // Handle successful login
+            function handleSuccessfulLogin(username) {
+                loginSuccess.style.display = 'block';
+                loginButton.disabled = true;
+                
+                // Reset login attempts for this user
+                loginAttempts[username] = 0;
+                
+                // Update account page with user info
+                userDisplayName.textContent = validUsers[username].displayName;
+                accountStatus.textContent = validUsers[username].status;
+                lastLogin.textContent = new Date().toLocaleString();
+                
+                // In a real application, you would redirect to another page
+                setTimeout(() => {
+                    // Hide login page, show account page
+                    loginPage.style.display = 'none';
+                    accountPage.style.display = 'block';
+                    
+                    // Reset login form for next time
+                    loginForm.reset();
+                    loginSuccess.style.display = 'none';
+                    loginButton.disabled = false;
+                }, 1500);
+            }
+            
+            // Handle failed login
+            function handleFailedLogin(username) {
+                // Increment login attempts
+                if (validUsers[username]) {
+                    loginAttempts[username]++;
+                    
+                    const remaining = 3 - loginAttempts[username];
+                    remainingAttempts.textContent = remaining;
+                    
+                    if (loginAttempts[username] >= 3) {
+                        // Lock the account
+                        validUsers[username].locked = true;
+                        accountLocked.style.display = 'block';
+                        attemptsWarning.style.display = 'none';
+                        loginButton.disabled = true;
+                    } else {
+                        // Show warning
+                        attemptsWarning.style.display = 'block';
+                        
+                        if (validUsers[username]) {
+                            showError(usernameGroup, usernameError, 'Invalid username or password');
+                            showError(passwordGroup, passwordError, 'Invalid username or password');
+                        } else {
+                            showError(usernameGroup, usernameError, 'Username does not exist');
+                        }
+                    }
+                } else {
+                    // Username doesn't exist
+                    showError(usernameGroup, usernameError, 'Username does not exist');
+                }
+                
+                // Clear password field
+                passwordInput.value = '';
+            }
+            
+            // Enable form fields if account was locked but user changed username
+            usernameInput.addEventListener('input', function() {
+                const username = usernameInput.value.trim();
+                
+                if (validUsers[username] && validUsers[username].locked) {
+                    accountLocked.style.display = 'block';
+                    attemptsWarning.style.display = 'none';
+                    loginButton.disabled = true;
+                } else {
+                    accountLocked.style.display = 'none';
+                    loginButton.disabled = false;
+                    
+                    if (loginAttempts[username] > 0) {
+                        const remaining = 3 - loginAttempts[username];
+                        remainingAttempts.textContent = remaining;
+                        attemptsWarning.style.display = 'block';
+                    } else {
+                        attemptsWarning.style.display = 'none';
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
