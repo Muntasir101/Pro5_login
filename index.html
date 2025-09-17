@@ -341,7 +341,7 @@
                     isValid = false;
                 }
                 
-                if (password) {
+                if (!password) {
                     showError(passwordGroup, passwordError, 'Password is required');
                     isValid = false;
                 }
